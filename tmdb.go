@@ -181,7 +181,26 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 			return fmt.Errorf("Failed to Unmarshal the Movie Export JSON Data: %w", err)
 		}
 
+		// Make the HTTP Get Request
+		response, err := http.Get(fmt.Sprintf("https://api.themoviedb.org/3/movie/%d?api_key=%s", movieExport.Id, tmdb.APIKey))
+		if err != nil {
+			return fmt.Errorf("HTTP Request Failed: %w", err)
+		}
+		defer response.Body.Close()
+
+		// Read the Response Body
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			return fmt.Errorf("Reading Response Body Failed: %w", err)
+		}
+
+		// Write the Response Body out to the Output File
+		if _, err := w.WriteString(fmt.Sprintf("%s\n", string(body))); err != nil {
+			return fmt.Errorf("Failed Writing to the Output File")
+		}
+
 		rowCount++
+		logger.Info().Int64("Completed Movie Export", rowCount).Msg(indent)
 	}
 
 	logger.Info().Int64("Number of Movies Exported", rowCount).Msg(indent)
