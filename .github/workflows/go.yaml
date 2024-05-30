@@ -1,0 +1,55 @@
+name: Go - Development Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  # Cancels pending runs when a PR gets updated.
+  group: ${{ github.head_ref || github.run_id }}-${{ github.actor }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version:
+          - 1.21.10
+          - 1.22.3
+
+    steps:
+      - uses: actions/checkout@v4.1.6
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5.0.1
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Display Go version
+        run: go version
+
+      - name: Install Go Dependencies
+        run: go get ./...
+
+      - name: Execute Go Build
+        run: go build -v ./...
+
+      - name: Execute Go Test
+        run: go test -v ./...
+
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.6
+      - name: Setup Go
+        uses: actions/setup-go@v5.0.1
+        with:
+          go-version: 1.21.10
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.0.1
+        with:
+          version: v1.59.0
+          args: --timeout=10m
