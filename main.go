@@ -95,5 +95,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := tmdb.ExportMovieData(); err != nil {
+		logger.Error().Err(err).Msg("Export Movie Data Failed")
+		os.Exit(1)
+	}
+
 	logger.Info().Msg("Done!")
 }
