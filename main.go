@@ -152,7 +152,7 @@ func main() {
 	}
 
 	if !*skipProductionCompanies {
-		if err := tmdb.ExportTVNetworksData(); err != nil {
+		if err := tmdb.ExportProductionCompaniesData(); err != nil {
 			logger.Error().Err(err).Msg("Export Production Companies Data Failed")
 			os.Exit(1)
 		}
