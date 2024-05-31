@@ -20,19 +20,20 @@ ARGS:
         Output Path  (Required)
   -skipCollections
         Skip Collections Exports
+  -skipCompanies
+        Skip Companies Exports
   -skipKeywords
         Skip Keywords Exports
   -skipMovies
         Skip Movie Exports
   -skipPeople
         Skip People Exports
-  -skipProductionCompanies
-        Skip Production Companies Exports
   -skipTVNetworks
         Skip TV Networks Exports
   -skipTVSeries
         Skip TV Series Exports
-  -v    Output Verbose Detail```
+  -v    Output Verbose Detail
+```
 
 ## Example
 

@@ -81,7 +81,7 @@ type KeywordsExport struct {
 	Name string `json:"name,omitempty"`
 }
 
-type ProductionCompaniesExport struct {
+type CompaniesExport struct {
 	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
@@ -96,13 +96,13 @@ func NewMovieDB(apiKey string) *TheMovieDB {
 
 	tmdb.APIKey = apiKey
 	tmdb.DailyExports = map[string]*DailyExport{
-		"Movies":               {"Movies", "movie_ids", "", "", ""},
-		"TV Series":            {"TV Series", "tv_series_ids", "", "", ""},
-		"People":               {"People", "person_ids", "", "", ""},
-		"Collections":          {"Collections", "collection_ids", "", "", ""},
-		"TV Networks":          {"TV Networks", "tv_network_ids", "", "", ""},
-		"Keywords":             {"Keywords", "keyword_ids", "", "", ""},
-		"Production Companies": {"Production Companies", "production_company_ids", "", "", ""},
+		"Movies":      {"Movies", "movie_ids", "", "", ""},
+		"TV Series":   {"TV Series", "tv_series_ids", "", "", ""},
+		"People":      {"People", "person_ids", "", "", ""},
+		"Collections": {"Collections", "collection_ids", "", "", ""},
+		"TV Networks": {"TV Networks", "tv_network_ids", "", "", ""},
+		"Keywords":    {"Keywords", "keyword_ids", "", "", ""},
+		"Companies":   {"Production Companies", "production_company_ids", "", "", ""},
 	}
 
 	return tmdb
@@ -801,12 +801,12 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "Production Companies" file and Export the People Data
-func (tmdb *TheMovieDB) ExportProductionCompaniesData() error {
+// Iterate through the Daily Exports "Companies" file and Export the People Data
+func (tmdb *TheMovieDB) ExportCompaniesData() error {
 
-	logger.Info().Msg("Initiating Export of Production Companies Data")
+	logger.Info().Msg("Initiating Export of Companies Data")
 
-	dailyExport := tmdb.DailyExports["Production Companies"]
+	dailyExport := tmdb.DailyExports["Companies"]
 
 	//------------------------------------------------------------------
 	// Open the Output File
@@ -820,10 +820,10 @@ func (tmdb *TheMovieDB) ExportProductionCompaniesData() error {
 	w := bufio.NewWriter(wf)
 	defer w.Flush()
 
-	// Open the Production Companies Daily Export IDs File and scan the lines
+	// Open the Companies Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Production Companies Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Companies Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -838,7 +838,7 @@ func (tmdb *TheMovieDB) ExportProductionCompaniesData() error {
 	var results chan *string
 
 	//------------------------------------------------------------------
-	// Iterate through All of the Production Companies Export IDs
+	// Iterate through All of the Companies Export IDs
 	var rowCount int64 = 0
 	var chunkCount int64 = 0
 	for r.Scan() {
@@ -857,13 +857,13 @@ func (tmdb *TheMovieDB) ExportProductionCompaniesData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var productionCompaniesExport *ProductionCompaniesExport = new(ProductionCompaniesExport)
-		if err := json.Unmarshal(line, &productionCompaniesExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Production Companies Export JSON Data: %w", err)
+		var companiesExport *CompaniesExport = new(CompaniesExport)
+		if err := json.Unmarshal(line, &companiesExport); err != nil {
+			return fmt.Errorf("Failed to Unmarshal the Companies Export JSON Data: %w", err)
 		}
 
 		// Add to the Worker Pool
-		jobs <- productionCompaniesExport.Id
+		jobs <- companiesExport.Id
 
 		chunkCount++
 		rowCount++
@@ -886,7 +886,7 @@ func (tmdb *TheMovieDB) ExportProductionCompaniesData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of Production Companies Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of Companies Exported", rowCount).Msg(indent)
 
 	return nil
 }

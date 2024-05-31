@@ -60,7 +60,7 @@ func main() {
 	var skipCollections = flag.Bool("skipCollections", false, "Skip Collections Exports")
 	var skipTVNetworks = flag.Bool("skipTVNetworks", false, "Skip TV Networks Exports")
 	var skipKeywords = flag.Bool("skipKeywords", false, "Skip Keywords Exports")
-	var skipProductionCompanies = flag.Bool("skipProductionCompanies", false, "Skip Production Companies Exports")
+	var skipCompanies = flag.Bool("skipCompanies", false, "Skip Companies Exports")
 	var verbose = flag.Bool("v", false, "Output Verbose Detail")
 
 	// Parse the flags
@@ -95,7 +95,7 @@ func main() {
 	logger.Info().Bool("Skip Collections Exports", *skipCollections).Msg(indent)
 	logger.Info().Bool("Skip TV Networks Exports", *skipTVNetworks).Msg(indent)
 	logger.Info().Bool("Skip Keywords Exports", *skipKeywords).Msg(indent)
-	logger.Info().Bool("Skip Production Companies Exports", *skipProductionCompanies).Msg(indent)
+	logger.Info().Bool("Skip Companies Exports", *skipCompanies).Msg(indent)
 	logger.Info().Msg("Begin")
 
 	var tmdb *TheMovieDB = NewMovieDB(*tmdbAPIKey)
@@ -151,9 +151,9 @@ func main() {
 		}
 	}
 
-	if !*skipProductionCompanies {
-		if err := tmdb.ExportProductionCompaniesData(); err != nil {
-			logger.Error().Err(err).Msg("Export Production Companies Data Failed")
+	if !*skipCompanies {
+		if err := tmdb.ExportCompaniesData(); err != nil {
+			logger.Error().Err(err).Msg("Export Companies Data Failed")
 			os.Exit(1)
 		}
 	}
