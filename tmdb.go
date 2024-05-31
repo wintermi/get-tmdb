@@ -273,7 +273,6 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 		if err := CloseMovieChunk(w, chunkSize, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Movie Chunk Failed: %w", err)
 		}
-		chunkCount = 0
 	}
 
 	logger.Info().Int64("Number of Movies Exported", rowCount).Msg(indent)
