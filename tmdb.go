@@ -153,10 +153,51 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 //---------------------------------------------------------------------------------------
 
 // Iterate through the Daily Exports "Movies" file and Export the Movie Data
+func MovieWorker(id int64, apiKey string, jobs <-chan int64, results chan<- *string) {
+	for job := range jobs {
+		// Make the Movie API Request
+		var response string
+		err := requests.
+			URL("https://api.themoviedb.org").
+			Pathf("/3/movie/%d", job).
+			Param("api_key", apiKey).
+			ToString(&response).
+			Fetch(ctx)
+		if err != nil {
+			logger.Error().Err(err).Msg("TMDB Movie API Request Failed:")
+		}
+
+		results <- &response
+	}
+}
+
+//---------------------------------------------------------------------------------------
+
+// Iterate through the Daily Exports "Movies" file and Export the Movie Data
+func CloseMovieChunk(w *bufio.Writer, chunkSize int64, rowCount int64, jobs chan int64, results chan *string) error {
+	close(jobs)
+
+	for num := int64(0); num < chunkSize; num++ {
+		response := <-results
+		if _, err := w.WriteString(fmt.Sprintf("%s\n", *response)); err != nil {
+			return fmt.Errorf("Failed Writing to the Output File")
+		}
+	}
+
+	// Output chunk message to the log
+	logger.Info().Int64("Completed Movie Export Chunk:", rowCount).Msg(indent)
+
+	return nil
+}
+
+//---------------------------------------------------------------------------------------
+
+// Iterate through the Daily Exports "Movies" file and Export the Movie Data
 func (tmdb *TheMovieDB) ExportMovieData() error {
 
 	logger.Info().Msg("Initiating Export of Movie Data")
 
+	//------------------------------------------------------------------
 	// Open the Output File
 	wf, err := os.Create(tmdb.DailyExports["Movies"].DataFile)
 	if err != nil {
@@ -178,9 +219,28 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
 
+	//------------------------------------------------------------------
+	// Setup the Worker Pool for the given chunk size
+	const numWorkers int64 = 50
+	const chunkSize int64 = 1000
+	var jobs chan int64
+	var results chan *string
+
+	//------------------------------------------------------------------
 	// Iterate through All of the Movie Export IDs
 	var rowCount int64 = 0
+	var chunkCount int64 = 0
 	for r.Scan() {
+
+		// Start workers if new Chunk
+		if chunkCount == 0 {
+			jobs = make(chan int64, chunkSize)
+			results = make(chan *string, chunkSize)
+
+			for num := int64(0); num < numWorkers; num++ {
+				go MovieWorker(num, tmdb.APIKey, jobs, results)
+			}
+		}
 
 		// Read the next line of the file
 		line := []byte(r.Text())
@@ -191,25 +251,29 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 			return fmt.Errorf("Failed to Unmarshal the Movie Export JSON Data: %w", err)
 		}
 
-		// Make the Movie API Request
-		var response string
-		err := requests.
-			URL("https://api.themoviedb.org").
-			Pathf("/3/movie/%d", movieExport.Id).
-			Param("api_key", tmdb.APIKey).
-			ToString(&response).
-			Fetch(ctx)
-		if err != nil {
-			return fmt.Errorf("TMDB Movie API Request Failed: %w", err)
-		}
+		// Add to the Worker Pool
+		jobs <- movieExport.Id
 
-		// Write the Response out to the Output File
-		if _, err := w.WriteString(fmt.Sprintf("%s\n", response)); err != nil {
-			return fmt.Errorf("Failed Writing to the Output File")
-		}
-
+		chunkCount++
 		rowCount++
-		logger.Info().Int64("Completed Movie Export", rowCount).Msg(indent)
+
+		// When you reach the max chunk size, wait for the Worker Pool to complete
+		// all of the jobs and write the response to the output file
+		if chunkCount == chunkSize {
+			if err := CloseMovieChunk(w, chunkSize, rowCount, jobs, results); err != nil {
+				return fmt.Errorf("Close Movie Chunk Failed: %w", err)
+			}
+			chunkCount = 0
+		}
+	}
+
+	// When you reach the max chunk size, wait for the Worker Pool to complete
+	// all of the jobs and write the response to the output file
+	if chunkCount > 0 {
+		if err := CloseMovieChunk(w, chunkSize, rowCount, jobs, results); err != nil {
+			return fmt.Errorf("Close Movie Chunk Failed: %w", err)
+		}
+		chunkCount = 0
 	}
 
 	logger.Info().Int64("Number of Movies Exported", rowCount).Msg(indent)
