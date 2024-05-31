@@ -102,7 +102,7 @@ func NewMovieDB(apiKey string) *TheMovieDB {
 		"Collections": {"Collections", "collection_ids", "", "", ""},
 		"TV Networks": {"TV Networks", "tv_network_ids", "", "", ""},
 		"Keywords":    {"Keywords", "keyword_ids", "", "", ""},
-		"Companies":   {"Production Companies", "production_company_ids", "", "", ""},
+		"Companies":   {"Companies", "production_company_ids", "", "", ""},
 	}
 
 	return tmdb
