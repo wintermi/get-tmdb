@@ -16,14 +16,17 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/carlmjohnson/requests"
 )
 
 type TheMovieDB struct {
@@ -47,6 +50,8 @@ type MovieExport struct {
 	Popularity    float64 `json:"popularity,omitempty"`
 	Video         bool    `json:"video,omitempty"`
 }
+
+var ctx = context.Background()
 
 //---------------------------------------------------------------------------------------
 
@@ -109,27 +114,32 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 		dailyExport.Name = fmt.Sprintf("%s_%s.json", dailyExport.UrlPrefix, utc.Format("01_02_2006"))
 		logger.Info().Stringer("Exporting", dailyExport).Msg(indent)
 
-		// Make the HTTP Get Request
-		response, err := http.Get(fmt.Sprintf("http://files.tmdb.org/p/exports/%s.gz?api_key=%s", dailyExport.Name, tmdb.APIKey))
+		// Make the Export API Request
+		var response bytes.Buffer
+		err := requests.
+			URL("http://files.tmdb.org").
+			Pathf("/p/exports/%s.gz", dailyExport.Name).
+			Param("api_key", tmdb.APIKey).
+			ToBytesBuffer(&response).
+			Fetch(ctx)
 		if err != nil {
-			return fmt.Errorf("HTTP Request Failed: %w", err)
+			return fmt.Errorf("TMDB Movie API Request Failed: %w", err)
 		}
-		defer response.Body.Close()
 
-		// Read the Response Body and decompress the GZIP data
-		gz, err := gzip.NewReader(response.Body)
+		// Decompress the response data
+		gz, err := gzip.NewReader(&response)
 		if err != nil {
-			return fmt.Errorf("GZip Reader Creation Failed: %w", err)
+			return fmt.Errorf("GZIP Decompress Failed: %w", err)
 		}
 
-		body, err := io.ReadAll(gz)
+		data, err := io.ReadAll(gz)
 		if err != nil {
 			return fmt.Errorf("Reading Response Body Failed: %w", err)
 		}
 
 		dailyExport.ExportFile, _ = filepath.Abs(filepath.Join(tmdb.OutputPath, dailyExport.Name))
 		dailyExport.DataFile, _ = filepath.Abs(filepath.Join(tmdb.OutputPath, "movies.json"))
-		err = os.WriteFile(dailyExport.ExportFile, body, 0600)
+		err = os.WriteFile(dailyExport.ExportFile, data, 0600)
 		if err != nil {
 			return fmt.Errorf("Writing Response to File Failed: %w", err)
 		}
@@ -181,21 +191,20 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 			return fmt.Errorf("Failed to Unmarshal the Movie Export JSON Data: %w", err)
 		}
 
-		// Make the HTTP Get Request
-		response, err := http.Get(fmt.Sprintf("https://api.themoviedb.org/3/movie/%d?api_key=%s", movieExport.Id, tmdb.APIKey))
+		// Make the Movie API Request
+		var response string
+		err := requests.
+			URL("https://api.themoviedb.org").
+			Pathf("/3/movie/%d", movieExport.Id).
+			Param("api_key", tmdb.APIKey).
+			ToString(&response).
+			Fetch(ctx)
 		if err != nil {
-			return fmt.Errorf("HTTP Request Failed: %w", err)
-		}
-		defer response.Body.Close()
-
-		// Read the Response Body
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return fmt.Errorf("Reading Response Body Failed: %w", err)
+			return fmt.Errorf("TMDB Movie API Request Failed: %w", err)
 		}
 
-		// Write the Response Body out to the Output File
-		if _, err := w.WriteString(fmt.Sprintf("%s\n", string(body))); err != nil {
+		// Write the Response out to the Output File
+		if _, err := w.WriteString(fmt.Sprintf("%s\n", response)); err != nil {
 			return fmt.Errorf("Failed Writing to the Output File")
 		}
 
