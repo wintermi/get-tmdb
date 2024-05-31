@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/carlmjohnson/requests"
+	"github.com/ybbus/httpretry"
 )
 
 type TheMovieDB struct {
@@ -163,6 +164,16 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 
 // Iterate through the Daily Exports "Movies" file and Export the Movie Data
 func MovieWorker(id int64, apiKey string, jobs <-chan int64, results chan<- *string) {
+	cl := httpretry.NewDefaultClient(
+		httpretry.WithMaxRetryCount(5),
+		httpretry.WithRetryPolicy(func(statusCode int, err error) bool {
+			return err != nil || statusCode >= 500 || statusCode == 0 || statusCode == 429
+		}),
+		httpretry.WithBackoffPolicy(func(attemptNum int) time.Duration {
+			return time.Duration(attemptNum) * 200 * time.Millisecond
+		}),
+	)
+
 	for job := range jobs {
 		// Make the Movie API Request
 		var response string
@@ -170,6 +181,7 @@ func MovieWorker(id int64, apiKey string, jobs <-chan int64, results chan<- *str
 			URL("https://api.themoviedb.org").
 			Pathf("/3/movie/%d", job).
 			Param("api_key", apiKey).
+			Client(cl).
 			ToString(&response).
 			Fetch(context.Background())
 		if err != nil {
@@ -230,7 +242,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
+	const numWorkers int64 = 200
 	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
