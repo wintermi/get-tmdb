@@ -54,6 +54,13 @@ func main() {
 	// Define the Long CLI flag names
 	var outputPath = flag.String("o", "", "Output Path  (Required)")
 	var tmdbAPIKey = flag.String("a", "", "The Movie DB API Key  (Required)")
+	var skipMovies = flag.Bool("skipMovies", false, "Skip Movie Exports")
+	var skipTVSeries = flag.Bool("skipTVSeries", false, "Skip TV Series Exports")
+	var skipPeople = flag.Bool("skipPeople", false, "Skip People Exports")
+	var skipCollections = flag.Bool("skipCollections", false, "Skip Collections Exports")
+	var skipTVNetworks = flag.Bool("skipTVNetworks", false, "Skip TV Networks Exports")
+	var skipKeywords = flag.Bool("skipKeywords", false, "Skip Keywords Exports")
+	var skipProductionCompanies = flag.Bool("skipProductionCompanies", false, "Skip Production Companies Exports")
 	var verbose = flag.Bool("v", false, "Output Verbose Detail")
 
 	// Parse the flags
@@ -82,6 +89,13 @@ func main() {
 	logger.Info().Msg("Arguments")
 	logger.Info().Str("Output Path", *outputPath).Msg(indent)
 	logger.Info().Str("The Movie DB API Key", *tmdbAPIKey).Msg(indent)
+	logger.Info().Bool("Skip Movie Exports", *skipMovies).Msg(indent)
+	logger.Info().Bool("Skip TV Series Exports", *skipTVSeries).Msg(indent)
+	logger.Info().Bool("Skip People Exports", *skipPeople).Msg(indent)
+	logger.Info().Bool("Skip Collections Exports", *skipCollections).Msg(indent)
+	logger.Info().Bool("Skip TV Networks Exports", *skipTVNetworks).Msg(indent)
+	logger.Info().Bool("Skip Keywords Exports", *skipKeywords).Msg(indent)
+	logger.Info().Bool("Skip Production Companies Exports", *skipProductionCompanies).Msg(indent)
 	logger.Info().Msg("Begin")
 
 	var tmdb *TheMovieDB = NewMovieDB(*tmdbAPIKey)
@@ -95,9 +109,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := tmdb.ExportMovieData(); err != nil {
-		logger.Error().Err(err).Msg("Export Movie Data Failed")
-		os.Exit(1)
+	if !*skipMovies {
+		if err := tmdb.ExportMovieData(); err != nil {
+			logger.Error().Err(err).Msg("Export Movie Data Failed")
+			os.Exit(1)
+		}
 	}
 
 	logger.Info().Msg("Done!")
