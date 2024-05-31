@@ -116,5 +116,12 @@ func main() {
 		}
 	}
 
+	if !*skipTVSeries {
+		if err := tmdb.ExportTVSeriesData(); err != nil {
+			logger.Error().Err(err).Msg("Export TV Series Data Failed")
+			os.Exit(1)
+		}
+	}
+
 	logger.Info().Msg("Done!")
 }
