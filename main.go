@@ -130,5 +130,21 @@ func main() {
 		}
 	}
 
+	if !*skipCollections {
+		if err := tmdb.ExportCollectionData(); err != nil {
+			logger.Error().Err(err).Msg("Export Collection Data Failed")
+			os.Exit(1)
+		}
+	}
+
+	if !*skipTVNetworks {
+	}
+
+	if !*skipKeywords {
+	}
+
+	if !*skipProductionCompanies {
+	}
+
 	logger.Info().Msg("Done!")
 }
