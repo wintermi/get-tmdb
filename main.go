@@ -138,12 +138,24 @@ func main() {
 	}
 
 	if !*skipTVNetworks {
+		if err := tmdb.ExportTVNetworksData(); err != nil {
+			logger.Error().Err(err).Msg("Export TV Networks Data Failed")
+			os.Exit(1)
+		}
 	}
 
 	if !*skipKeywords {
+		if err := tmdb.ExportTVNetworksData(); err != nil {
+			logger.Error().Err(err).Msg("Export Keywords Data Failed")
+			os.Exit(1)
+		}
 	}
 
 	if !*skipProductionCompanies {
+		if err := tmdb.ExportTVNetworksData(); err != nil {
+			logger.Error().Err(err).Msg("Export Production Companies Data Failed")
+			os.Exit(1)
+		}
 	}
 
 	logger.Info().Msg("Done!")

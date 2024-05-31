@@ -71,12 +71,12 @@ type CollectionExport struct {
 	Name string `json:"name,omitempty"`
 }
 
-type TVNetworkExport struct {
+type TVNetworksExport struct {
 	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
-type KeywordExport struct {
+type KeywordsExport struct {
 	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
@@ -611,6 +611,98 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 	}
 
 	logger.Info().Int64("Number of Collection Exported", rowCount).Msg(indent)
+
+	return nil
+}
+
+//---------------------------------------------------------------------------------------
+
+// Iterate through the Daily Exports "TV Networks" file and Export the People Data
+func (tmdb *TheMovieDB) ExportTVNetworksData() error {
+
+	logger.Info().Msg("Initiating Export of TV Networks Data")
+
+	dailyExport := tmdb.DailyExports["TV Networks"]
+
+	//------------------------------------------------------------------
+	// Open the Output File
+	wf, err := os.Create(dailyExport.DataFile)
+	if err != nil {
+		return fmt.Errorf("Failed to Open the Output File: %w", err)
+	}
+	defer wf.Close()
+
+	// Ready a Buffered Writer
+	w := bufio.NewWriter(wf)
+	defer w.Flush()
+
+	// Open the TV Networks Daily Export IDs File and scan the lines
+	rf, err := os.Open(dailyExport.ExportFile)
+	if err != nil {
+		return fmt.Errorf("Failed to Open the TV Networks Daily Export IDs File: %w", err)
+	}
+	defer rf.Close()
+
+	r := bufio.NewScanner(rf)
+	r.Split(bufio.ScanLines)
+
+	//------------------------------------------------------------------
+	// Setup the Worker Pool for the given chunk size
+	const numWorkers int64 = 50
+	const chunkSize int64 = 1000
+	var jobs chan int64
+	var results chan *string
+
+	//------------------------------------------------------------------
+	// Iterate through All of the TV Networks Export IDs
+	var rowCount int64 = 0
+	var chunkCount int64 = 0
+	for r.Scan() {
+
+		// Start workers if new Chunk
+		if chunkCount == 0 {
+			jobs = make(chan int64, chunkSize)
+			results = make(chan *string, chunkSize)
+
+			for num := int64(0); num < numWorkers; num++ {
+				go RequestWorker("https://api.themoviedb.org", "/3/network/%d", tmdb.APIKey, jobs, results)
+			}
+		}
+
+		// Read the next line of the file
+		line := []byte(r.Text())
+
+		// Unmarshal the JSON data contained in the line
+		var tvNetworksExport *TVNetworksExport = new(TVNetworksExport)
+		if err := json.Unmarshal(line, &tvNetworksExport); err != nil {
+			return fmt.Errorf("Failed to Unmarshal the TV Networks Export JSON Data: %w", err)
+		}
+
+		// Add to the Worker Pool
+		jobs <- tvNetworksExport.Id
+
+		chunkCount++
+		rowCount++
+
+		// When you reach the max chunk size, wait for the Worker Pool to complete
+		// all of the jobs and write the response to the output file
+		if chunkCount == chunkSize {
+			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			}
+			chunkCount = 0
+		}
+	}
+
+	// When you reach the max chunk size, wait for the Worker Pool to complete
+	// all of the jobs and write the response to the output file
+	if chunkCount > 0 {
+		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+		}
+	}
+
+	logger.Info().Int64("Number of TV Networks Exported", rowCount).Msg(indent)
 
 	return nil
 }
