@@ -145,7 +145,7 @@ func main() {
 	}
 
 	if !*skipKeywords {
-		if err := tmdb.ExportTVNetworksData(); err != nil {
+		if err := tmdb.ExportKeywordsData(); err != nil {
 			logger.Error().Err(err).Msg("Export Keywords Data Failed")
 			os.Exit(1)
 		}

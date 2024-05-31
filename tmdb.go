@@ -706,3 +706,95 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 
 	return nil
 }
+
+//---------------------------------------------------------------------------------------
+
+// Iterate through the Daily Exports "Keywords" file and Export the People Data
+func (tmdb *TheMovieDB) ExportKeywordsData() error {
+
+	logger.Info().Msg("Initiating Export of Keywords Data")
+
+	dailyExport := tmdb.DailyExports["Keywords"]
+
+	//------------------------------------------------------------------
+	// Open the Output File
+	wf, err := os.Create(dailyExport.DataFile)
+	if err != nil {
+		return fmt.Errorf("Failed to Open the Output File: %w", err)
+	}
+	defer wf.Close()
+
+	// Ready a Buffered Writer
+	w := bufio.NewWriter(wf)
+	defer w.Flush()
+
+	// Open the Keywords Daily Export IDs File and scan the lines
+	rf, err := os.Open(dailyExport.ExportFile)
+	if err != nil {
+		return fmt.Errorf("Failed to Open the Keywords Daily Export IDs File: %w", err)
+	}
+	defer rf.Close()
+
+	r := bufio.NewScanner(rf)
+	r.Split(bufio.ScanLines)
+
+	//------------------------------------------------------------------
+	// Setup the Worker Pool for the given chunk size
+	const numWorkers int64 = 50
+	const chunkSize int64 = 1000
+	var jobs chan int64
+	var results chan *string
+
+	//------------------------------------------------------------------
+	// Iterate through All of the Keywords Export IDs
+	var rowCount int64 = 0
+	var chunkCount int64 = 0
+	for r.Scan() {
+
+		// Start workers if new Chunk
+		if chunkCount == 0 {
+			jobs = make(chan int64, chunkSize)
+			results = make(chan *string, chunkSize)
+
+			for num := int64(0); num < numWorkers; num++ {
+				go RequestWorker("https://api.themoviedb.org", "/3/keyword/%d", tmdb.APIKey, jobs, results)
+			}
+		}
+
+		// Read the next line of the file
+		line := []byte(r.Text())
+
+		// Unmarshal the JSON data contained in the line
+		var keywordsExport *KeywordsExport = new(KeywordsExport)
+		if err := json.Unmarshal(line, &keywordsExport); err != nil {
+			return fmt.Errorf("Failed to Unmarshal the Keywords Export JSON Data: %w", err)
+		}
+
+		// Add to the Worker Pool
+		jobs <- keywordsExport.Id
+
+		chunkCount++
+		rowCount++
+
+		// When you reach the max chunk size, wait for the Worker Pool to complete
+		// all of the jobs and write the response to the output file
+		if chunkCount == chunkSize {
+			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			}
+			chunkCount = 0
+		}
+	}
+
+	// When you reach the max chunk size, wait for the Worker Pool to complete
+	// all of the jobs and write the response to the output file
+	if chunkCount > 0 {
+		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+		}
+	}
+
+	logger.Info().Int64("Number of Keywords Exported", rowCount).Msg(indent)
+
+	return nil
+}
