@@ -165,12 +165,12 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 // Iterate through the Daily Exports "Movies" file and Export the Movie Data
 func MovieWorker(id int64, apiKey string, jobs <-chan int64, results chan<- *string) {
 	cl := httpretry.NewDefaultClient(
-		httpretry.WithMaxRetryCount(5),
+		httpretry.WithMaxRetryCount(10),
 		httpretry.WithRetryPolicy(func(statusCode int, err error) bool {
-			return err != nil || statusCode >= 500 || statusCode == 0 || statusCode == 429
+			return statusCode == 429 || err != nil || statusCode >= 500 || statusCode == 0
 		}),
 		httpretry.WithBackoffPolicy(func(attemptNum int) time.Duration {
-			return time.Duration(attemptNum) * 200 * time.Millisecond
+			return 200 * time.Millisecond
 		}),
 	)
 
@@ -242,7 +242,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 200
+	const numWorkers int64 = 100
 	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
