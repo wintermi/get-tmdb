@@ -123,5 +123,12 @@ func main() {
 		}
 	}
 
+	if !*skipPeople {
+		if err := tmdb.ExportPeopleData(); err != nil {
+			logger.Error().Err(err).Msg("Export People Data Failed")
+			os.Exit(1)
+		}
+	}
+
 	logger.Info().Msg("Done!")
 }
