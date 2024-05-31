@@ -84,8 +84,8 @@ func main() {
 	logger.Info().Str("The Movie DB API Key", *tmdbAPIKey).Msg(indent)
 	logger.Info().Msg("Begin")
 
-	var tmdb *TheMovieDB = new(TheMovieDB)
-	if err := tmdb.ValidateOutputPath(*tmdbAPIKey, *outputPath); err != nil {
+	var tmdb *TheMovieDB = NewMovieDB(*tmdbAPIKey)
+	if err := tmdb.ValidateOutputPath(*outputPath); err != nil {
 		logger.Error().Err(err).Msg("Output Path Validation Failed")
 		os.Exit(1)
 	}

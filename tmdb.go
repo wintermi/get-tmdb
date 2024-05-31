@@ -51,7 +51,27 @@ type MovieExport struct {
 	Video         bool    `json:"video,omitempty"`
 }
 
-var ctx = context.Background()
+//---------------------------------------------------------------------------------------
+
+// Return New Instance of The Movie DB struct
+func NewMovieDB(apiKey string) *TheMovieDB {
+
+	// Initialise New Instance of The Movie DB
+	tmdb := new(TheMovieDB)
+
+	tmdb.APIKey = apiKey
+	tmdb.DailyExports = map[string]*DailyExport{
+		"Movies":               {"Movies", "movie_ids", "", "", ""},
+		"TV Series":            {"TV Series", "tv_series_ids", "", "", ""},
+		"People":               {"People", "person_ids", "", "", ""},
+		"Collections":          {"Collections", "collection_ids", "", "", ""},
+		"TV Networks":          {"TV Networks", "tv_network_ids", "", "", ""},
+		"Keywords":             {"Keywords", "keyword_ids", "", "", ""},
+		"Production Companies": {"Production Companies", "production_company_ids", "", "", ""},
+	}
+
+	return tmdb
+}
 
 //---------------------------------------------------------------------------------------
 
@@ -63,7 +83,7 @@ func (de DailyExport) String() string {
 //---------------------------------------------------------------------------------------
 
 // Validate or Create the Output Path if it does not exist
-func (tmdb *TheMovieDB) ValidateOutputPath(tmdbAPIKey string, outputPath string) error {
+func (tmdb *TheMovieDB) ValidateOutputPath(outputPath string) error {
 
 	// Calculate the Absolute Output Path
 	path, err := filepath.Abs(outputPath)
@@ -78,7 +98,6 @@ func (tmdb *TheMovieDB) ValidateOutputPath(tmdbAPIKey string, outputPath string)
 		}
 	}
 	tmdb.OutputPath = path
-	tmdb.APIKey = tmdbAPIKey
 
 	return nil
 }
@@ -89,16 +108,6 @@ func (tmdb *TheMovieDB) ValidateOutputPath(tmdbAPIKey string, outputPath string)
 func (tmdb *TheMovieDB) GetDailyExports() error {
 
 	logger.Info().Msg("Initiating Request to Get Daily ID Exports")
-
-	tmdb.DailyExports = map[string]*DailyExport{
-		"Movies":               {"Movies", "movie_ids", "", "", ""},
-		"TV Series":            {"TV Series", "tv_series_ids", "", "", ""},
-		"People":               {"People", "person_ids", "", "", ""},
-		"Collections":          {"Collections", "collection_ids", "", "", ""},
-		"TV Networks":          {"TV Networks", "tv_network_ids", "", "", ""},
-		"Keywords":             {"Keywords", "keyword_ids", "", "", ""},
-		"Production Companies": {"Production Companies", "production_company_ids", "", "", ""},
-	}
 
 	// Calculate the latest date based on the following logic
 	//     The export job runs every day starting at around 7:00 AM UTC,
@@ -121,7 +130,7 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 			Pathf("/p/exports/%s.gz", dailyExport.Name).
 			Param("api_key", tmdb.APIKey).
 			ToBytesBuffer(&response).
-			Fetch(ctx)
+			Fetch(context.Background())
 		if err != nil {
 			return fmt.Errorf("TMDB Movie API Request Failed: %w", err)
 		}
@@ -162,7 +171,7 @@ func MovieWorker(id int64, apiKey string, jobs <-chan int64, results chan<- *str
 			Pathf("/3/movie/%d", job).
 			Param("api_key", apiKey).
 			ToString(&response).
-			Fetch(ctx)
+			Fetch(context.Background())
 		if err != nil {
 			logger.Error().Err(err).Msg("TMDB Movie API Request Failed:")
 		}
