@@ -162,30 +162,31 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "Movies" file and Export the Movie Data
-func MovieWorker(id int64, apiKey string, jobs <-chan int64, results chan<- *string) {
+// Worker Pool for Concurrent HTTP API Requests
+func RequestWorker(url string, path string, apiKey string, jobs <-chan int64, results chan<- *string) {
+	// Create a New HTTP Retry Client
 	cl := httpretry.NewDefaultClient(
-		httpretry.WithMaxRetryCount(10),
+		httpretry.WithMaxRetryCount(20),
 		httpretry.WithRetryPolicy(func(statusCode int, err error) bool {
 			return statusCode == 429 || err != nil || statusCode >= 500 || statusCode == 0
 		}),
 		httpretry.WithBackoffPolicy(func(attemptNum int) time.Duration {
-			return 200 * time.Millisecond
+			return 100 * time.Millisecond
 		}),
 	)
 
-	for job := range jobs {
-		// Make the Movie API Request
+	for id := range jobs {
+		// Make the API Request
 		var response string
 		err := requests.
-			URL("https://api.themoviedb.org").
-			Pathf("/3/movie/%d", job).
+			URL(url).
+			Pathf(path, id).
 			Param("api_key", apiKey).
 			Client(cl).
 			ToString(&response).
 			Fetch(context.Background())
 		if err != nil {
-			logger.Error().Err(err).Msg("TMDB Movie API Request Failed:")
+			logger.Error().Err(err).Msg("API Request Failed:")
 		}
 
 		results <- &response
@@ -194,8 +195,8 @@ func MovieWorker(id int64, apiKey string, jobs <-chan int64, results chan<- *str
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "Movies" file and Export the Movie Data
-func CloseMovieChunk(w *bufio.Writer, chunkSize int64, rowCount int64, jobs chan int64, results chan *string) error {
+// Close the Worker Pool and Write the Results to the Output File
+func CloseWorkerPool(w *bufio.Writer, chunkSize int64, rowCount int64, jobs chan int64, results chan *string) error {
 	close(jobs)
 
 	for num := int64(0); num < chunkSize; num++ {
@@ -206,7 +207,7 @@ func CloseMovieChunk(w *bufio.Writer, chunkSize int64, rowCount int64, jobs chan
 	}
 
 	// Output chunk message to the log
-	logger.Info().Int64("Completed Movie Export Chunk:", rowCount).Msg(indent)
+	logger.Info().Int64("Completed Chunk:", rowCount).Msg(indent)
 
 	return nil
 }
@@ -242,7 +243,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 100
+	const numWorkers int64 = 50
 	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
@@ -259,7 +260,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 			results = make(chan *string, chunkSize)
 
 			for num := int64(0); num < numWorkers; num++ {
-				go MovieWorker(num, tmdb.APIKey, jobs, results)
+				go RequestWorker("https://api.themoviedb.org", "/3/movie/%d", tmdb.APIKey, jobs, results)
 			}
 		}
 
@@ -281,7 +282,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseMovieChunk(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Movie Chunk Failed: %w", err)
 			}
 			chunkCount = 0
@@ -291,7 +292,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseMovieChunk(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Movie Chunk Failed: %w", err)
 		}
 	}
