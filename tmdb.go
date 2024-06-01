@@ -88,7 +88,7 @@ type CompaniesExport struct {
 
 // Worker Pool constants
 const numWorkers int64 = 60
-const chunkSize int64 = 600
+const chunkSize int64 = 3000
 
 //---------------------------------------------------------------------------------------
 
