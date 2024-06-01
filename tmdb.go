@@ -86,6 +86,10 @@ type CompaniesExport struct {
 	Name string `json:"name,omitempty"`
 }
 
+// Worker Pool constants
+const numWorkers int64 = 60
+const chunkSize int64 = 600
+
 //---------------------------------------------------------------------------------------
 
 // Return New Instance of The Movie DB struct
@@ -231,10 +235,10 @@ func RequestWorker(url string, path string, apiKey string, jobs <-chan int64, re
 //---------------------------------------------------------------------------------------
 
 // Close the Worker Pool and Write the Results to the Output File
-func CloseWorkerPool(w *bufio.Writer, chunkSize int64, rowCount int64, jobs chan int64, results chan *string) error {
+func CloseWorkerPool(w *bufio.Writer, chunkCount int64, rowCount int64, jobs chan int64, results chan *string) error {
 	close(jobs)
 
-	for num := int64(0); num < chunkSize; num++ {
+	for num := int64(0); num < chunkCount; num++ {
 		response := <-results
 		if _, err := w.WriteString(fmt.Sprintf("%s\n", *response)); err != nil {
 			return fmt.Errorf("Failed Writing to the Output File")
@@ -280,8 +284,6 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
-	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
 
@@ -319,7 +321,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Worker Pool Failed: %w", err)
 			}
 			chunkCount = 0
@@ -329,7 +331,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Worker Pool Failed: %w", err)
 		}
 	}
@@ -372,8 +374,6 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
-	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
 
@@ -411,7 +411,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Worker Pool Failed: %w", err)
 			}
 			chunkCount = 0
@@ -421,7 +421,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Worker Pool Failed: %w", err)
 		}
 	}
@@ -464,8 +464,6 @@ func (tmdb *TheMovieDB) ExportPeopleData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
-	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
 
@@ -503,7 +501,7 @@ func (tmdb *TheMovieDB) ExportPeopleData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Worker Pool Failed: %w", err)
 			}
 			chunkCount = 0
@@ -513,7 +511,7 @@ func (tmdb *TheMovieDB) ExportPeopleData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Worker Pool Failed: %w", err)
 		}
 	}
@@ -556,8 +554,6 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
-	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
 
@@ -595,7 +591,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Worker Pool Failed: %w", err)
 			}
 			chunkCount = 0
@@ -605,7 +601,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Worker Pool Failed: %w", err)
 		}
 	}
@@ -648,8 +644,6 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
-	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
 
@@ -687,7 +681,7 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Worker Pool Failed: %w", err)
 			}
 			chunkCount = 0
@@ -697,7 +691,7 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Worker Pool Failed: %w", err)
 		}
 	}
@@ -740,8 +734,6 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
-	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
 
@@ -779,7 +771,7 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Worker Pool Failed: %w", err)
 			}
 			chunkCount = 0
@@ -789,7 +781,7 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Worker Pool Failed: %w", err)
 		}
 	}
@@ -832,8 +824,6 @@ func (tmdb *TheMovieDB) ExportCompaniesData() error {
 
 	//------------------------------------------------------------------
 	// Setup the Worker Pool for the given chunk size
-	const numWorkers int64 = 50
-	const chunkSize int64 = 1000
 	var jobs chan int64
 	var results chan *string
 
@@ -871,7 +861,7 @@ func (tmdb *TheMovieDB) ExportCompaniesData() error {
 		// When you reach the max chunk size, wait for the Worker Pool to complete
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
-			if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 				return fmt.Errorf("Close Worker Pool Failed: %w", err)
 			}
 			chunkCount = 0
@@ -881,7 +871,7 @@ func (tmdb *TheMovieDB) ExportCompaniesData() error {
 	// When you reach the max chunk size, wait for the Worker Pool to complete
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
-		if err := CloseWorkerPool(w, chunkSize, rowCount, jobs, results); err != nil {
+		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
 			return fmt.Errorf("Close Worker Pool Failed: %w", err)
 		}
 	}
