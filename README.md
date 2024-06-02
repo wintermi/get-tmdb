@@ -38,9 +38,7 @@ ARGS:
 ## Example
 
 ```
-
 get-tmdb -a "API_KEY" -o "./output"
-
 ```
 
 ## License
