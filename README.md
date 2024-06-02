@@ -9,7 +9,7 @@
 
 A command line application designed to crawl The Movie DB API following the The Movie DB API rules, and outputs the results as JSONL files so you can go forth and experiment with movie data.
 
-````
+```
 USAGE:
     get-tmdb -a API_KEY -o OUTPUT_PATH
 
@@ -37,7 +37,7 @@ ARGS:
 
 ## Example
 
-````
+```
 
 get-tmdb -a "API_KEY" -o "./output"
 
@@ -46,4 +46,3 @@ get-tmdb -a "API_KEY" -o "./output"
 ## License
 
 **get-tmdb** is released under the [Apache License 2.0](https://github.com/wintermi/get-tmdb/blob/main/LICENSE) unless explicitly mentioned in the file header.
-```
