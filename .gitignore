@@ -29,4 +29,5 @@
 
 # Project Ignores
 get-tmdb
-output/*.json
+output/*
+!output/.gitkeep
