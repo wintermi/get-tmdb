@@ -34,6 +34,7 @@ import (
 type TheMovieDB struct {
 	APIKey       string
 	OutputPath   string
+	ExportDate   time.Time
 	DailyExports map[string]*DailyExport
 }
 
@@ -95,18 +96,27 @@ const chunkSize int64 = 3000
 // Return New Instance of The Movie DB struct
 func NewMovieDB(apiKey string) *TheMovieDB {
 
+	// Calculate the latest date based on the following logic
+	//     The export job runs every day starting at around 7:00 AM UTC,
+	//     and all files are available by 8:00 AM UTC.
+	utc := time.Now().UTC()
+	if utc.Hour() < 8 {
+		utc = utc.Add(time.Duration(-24) * time.Hour)
+	}
+
 	// Initialise New Instance of The Movie DB
 	tmdb := new(TheMovieDB)
 
 	tmdb.APIKey = apiKey
+	tmdb.ExportDate = utc
 	tmdb.DailyExports = map[string]*DailyExport{
-		"Movies":      {"Movies", "movie_ids", "", "", ""},
-		"TV Series":   {"TV Series", "tv_series_ids", "", "", ""},
-		"People":      {"People", "person_ids", "", "", ""},
-		"Collections": {"Collections", "collection_ids", "", "", ""},
-		"TV Networks": {"TV Networks", "tv_network_ids", "", "", ""},
-		"Keywords":    {"Keywords", "keyword_ids", "", "", ""},
-		"Companies":   {"Companies", "production_company_ids", "", "", ""},
+		"Movies":      {"Movies", "movie_ids", "movie_ids.json", "", ""},
+		"TV Series":   {"TV Series", "tv_series_ids", "tv_series_ids.json", "", ""},
+		"People":      {"People", "person_ids", "person_ids.json", "", ""},
+		"Collections": {"Collections", "collection_ids", "collection_ids.json", "", ""},
+		"TV Networks": {"TV Networks", "tv_network_ids", "tv_network_ids.json", "", ""},
+		"Keywords":    {"Keywords", "keyword_ids", "keyword_ids.json", "", ""},
+		"Companies":   {"Companies", "production_company_ids", "company_ids.json", "", ""},
 	}
 
 	return tmdb
@@ -125,7 +135,7 @@ func (de DailyExport) String() string {
 func (tmdb *TheMovieDB) ValidateOutputPath(outputPath string) error {
 
 	// Calculate the Absolute Output Path
-	path, err := filepath.Abs(outputPath)
+	path, err := filepath.Abs(filepath.Join(outputPath, fmt.Sprintf("export_date=%s", tmdb.ExportDate.Format("2006-01-02"))))
 	if err != nil {
 		return fmt.Errorf("Failed To Get Absolute Output Path: %w", err)
 	}
@@ -148,25 +158,16 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 
 	logger.Info().Msg("Initiating Request to Get Daily ID Exports")
 
-	// Calculate the latest date based on the following logic
-	//     The export job runs every day starting at around 7:00 AM UTC,
-	//     and all files are available by 8:00 AM UTC.
-	utc := time.Now().UTC()
-	if utc.Hour() < 8 {
-		utc = utc.Add(time.Duration(-24) * time.Hour)
-	}
-
 	// Iterate through All of the Entries
 	for _, dailyExport := range tmdb.DailyExports {
 
-		dailyExport.Name = fmt.Sprintf("%s_%s.json", dailyExport.UrlPrefix, utc.Format("01_02_2006"))
 		logger.Info().Stringer("Exporting", dailyExport).Msg(indent)
 
 		// Make the Export API Request
 		var response bytes.Buffer
 		err := requests.
 			URL("http://files.tmdb.org").
-			Pathf("/p/exports/%s.gz", dailyExport.Name).
+			Pathf("/p/exports/%s.gz", fmt.Sprintf("%s_%s.json", dailyExport.UrlPrefix, tmdb.ExportDate.Format("01_02_2006"))).
 			Param("api_key", tmdb.APIKey).
 			ToBytesBuffer(&response).
 			Fetch(context.Background())
