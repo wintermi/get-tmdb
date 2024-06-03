@@ -16,6 +16,8 @@ USAGE:
 ARGS:
   -a string
         The Movie DB API Key  (Required)
+  -justIDs
+        Only Get Daily Export IDs
   -o string
         Output Path  (Required)
   -skipCollections

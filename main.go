@@ -54,6 +54,7 @@ func main() {
 	// Define the Long CLI flag names
 	var outputPath = flag.String("o", "", "Output Path  (Required)")
 	var tmdbAPIKey = flag.String("a", "", "The Movie DB API Key  (Required)")
+	var justIDs = flag.Bool("justIDs", false, "Only Get Daily Export IDs")
 	var skipMovies = flag.Bool("skipMovies", false, "Skip Movie Exports")
 	var skipTVSeries = flag.Bool("skipTVSeries", false, "Skip TV Series Exports")
 	var skipPeople = flag.Bool("skipPeople", false, "Skip People Exports")
@@ -89,6 +90,7 @@ func main() {
 	logger.Info().Msg("Arguments")
 	logger.Info().Str("Output Path", *outputPath).Msg(indent)
 	logger.Info().Str("The Movie DB API Key", *tmdbAPIKey).Msg(indent)
+	logger.Info().Bool("Only Get Daily Export IDs", *justIDs).Msg(indent)
 	logger.Info().Bool("Skip Movie Exports", *skipMovies).Msg(indent)
 	logger.Info().Bool("Skip TV Series Exports", *skipTVSeries).Msg(indent)
 	logger.Info().Bool("Skip People Exports", *skipPeople).Msg(indent)
@@ -109,52 +111,55 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !*skipMovies {
-		if err := tmdb.ExportMovieData(); err != nil {
-			logger.Error().Err(err).Msg("Export Movie Data Failed")
-			os.Exit(1)
+	// If we are only getting the IDs, then we can finish up here
+	if !*justIDs {
+		if !*skipMovies {
+			if err := tmdb.ExportMovieData(); err != nil {
+				logger.Error().Err(err).Msg("Export Movie Data Failed")
+				os.Exit(1)
+			}
 		}
-	}
 
-	if !*skipTVSeries {
-		if err := tmdb.ExportTVSeriesData(); err != nil {
-			logger.Error().Err(err).Msg("Export TV Series Data Failed")
-			os.Exit(1)
+		if !*skipTVSeries {
+			if err := tmdb.ExportTVSeriesData(); err != nil {
+				logger.Error().Err(err).Msg("Export TV Series Data Failed")
+				os.Exit(1)
+			}
 		}
-	}
 
-	if !*skipPeople {
-		if err := tmdb.ExportPeopleData(); err != nil {
-			logger.Error().Err(err).Msg("Export People Data Failed")
-			os.Exit(1)
+		if !*skipPeople {
+			if err := tmdb.ExportPeopleData(); err != nil {
+				logger.Error().Err(err).Msg("Export People Data Failed")
+				os.Exit(1)
+			}
 		}
-	}
 
-	if !*skipCollections {
-		if err := tmdb.ExportCollectionData(); err != nil {
-			logger.Error().Err(err).Msg("Export Collection Data Failed")
-			os.Exit(1)
+		if !*skipCollections {
+			if err := tmdb.ExportCollectionData(); err != nil {
+				logger.Error().Err(err).Msg("Export Collection Data Failed")
+				os.Exit(1)
+			}
 		}
-	}
 
-	if !*skipTVNetworks {
-		if err := tmdb.ExportTVNetworksData(); err != nil {
-			logger.Error().Err(err).Msg("Export TV Networks Data Failed")
-			os.Exit(1)
+		if !*skipTVNetworks {
+			if err := tmdb.ExportTVNetworksData(); err != nil {
+				logger.Error().Err(err).Msg("Export TV Networks Data Failed")
+				os.Exit(1)
+			}
 		}
-	}
 
-	if !*skipKeywords {
-		if err := tmdb.ExportKeywordsData(); err != nil {
-			logger.Error().Err(err).Msg("Export Keywords Data Failed")
-			os.Exit(1)
+		if !*skipKeywords {
+			if err := tmdb.ExportKeywordsData(); err != nil {
+				logger.Error().Err(err).Msg("Export Keywords Data Failed")
+				os.Exit(1)
+			}
 		}
-	}
 
-	if !*skipCompanies {
-		if err := tmdb.ExportCompaniesData(); err != nil {
-			logger.Error().Err(err).Msg("Export Companies Data Failed")
-			os.Exit(1)
+		if !*skipCompanies {
+			if err := tmdb.ExportCompaniesData(); err != nil {
+				logger.Error().Err(err).Msg("Export Companies Data Failed")
+				os.Exit(1)
+			}
 		}
 	}
 
