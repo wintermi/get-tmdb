@@ -94,14 +94,21 @@ const chunkSize int64 = 3000
 //---------------------------------------------------------------------------------------
 
 // Return New Instance of The Movie DB struct
-func NewMovieDB(apiKey string) *TheMovieDB {
+func NewMovieDB(apiKey string, exportDate string) *TheMovieDB {
 
-	// Calculate the latest date based on the following logic
+	var utc time.Time
+
+	// If no "Export Date Override" provided then we Calculate the latest date
+	// based on the following logic
 	//     The export job runs every day starting at around 7:00 AM UTC,
 	//     and all files are available by 8:00 AM UTC.
-	utc := time.Now().UTC()
-	if utc.Hour() < 8 {
-		utc = utc.Add(time.Duration(-24) * time.Hour)
+	if exportDate == "" {
+		utc = time.Now().UTC()
+		if utc.Hour() < 8 {
+			utc = utc.Add(time.Duration(-24) * time.Hour)
+		}
+	} else {
+		utc, _ = time.Parse("2006-01-02", exportDate)
 	}
 
 	// Initialise New Instance of The Movie DB

@@ -16,6 +16,8 @@ USAGE:
 ARGS:
   -a string
         The Movie DB API Key  (Required)
+  -exportDate string
+        Export Date Override
   -justIDs
         Only Get Daily Export IDs
   -o string

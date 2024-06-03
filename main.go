@@ -54,6 +54,7 @@ func main() {
 	// Define the Long CLI flag names
 	var outputPath = flag.String("o", "", "Output Path  (Required)")
 	var tmdbAPIKey = flag.String("a", "", "The Movie DB API Key  (Required)")
+	var exportDate = flag.String("exportDate", "", "Export Date Override")
 	var justIDs = flag.Bool("justIDs", false, "Only Get Daily Export IDs")
 	var skipMovies = flag.Bool("skipMovies", false, "Skip Movie Exports")
 	var skipTVSeries = flag.Bool("skipTVSeries", false, "Skip TV Series Exports")
@@ -90,6 +91,7 @@ func main() {
 	logger.Info().Msg("Arguments")
 	logger.Info().Str("Output Path", *outputPath).Msg(indent)
 	logger.Info().Str("The Movie DB API Key", *tmdbAPIKey).Msg(indent)
+	logger.Info().Str("Export Date Override", *exportDate).Msg(indent)
 	logger.Info().Bool("Only Get Daily Export IDs", *justIDs).Msg(indent)
 	logger.Info().Bool("Skip Movie Exports", *skipMovies).Msg(indent)
 	logger.Info().Bool("Skip TV Series Exports", *skipTVSeries).Msg(indent)
@@ -100,7 +102,7 @@ func main() {
 	logger.Info().Bool("Skip Companies Exports", *skipCompanies).Msg(indent)
 	logger.Info().Msg("Begin")
 
-	var tmdb *TheMovieDB = NewMovieDB(*tmdbAPIKey)
+	var tmdb *TheMovieDB = NewMovieDB(*tmdbAPIKey, *exportDate)
 	if err := tmdb.ValidateOutputPath(*outputPath); err != nil {
 		logger.Error().Err(err).Msg("Output Path Validation Failed")
 		os.Exit(1)
