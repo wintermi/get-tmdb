@@ -60,7 +60,7 @@ type TVSeriesExport struct {
 	Popularity   float64 `json:"popularity,omitempty"`
 }
 
-type PeopleExport struct {
+type PersonExport struct {
 	Adult      bool    `json:"adult,omitempty"`
 	Id         int64   `json:"id,omitempty"`
 	Name       string  `json:"name,omitempty"`
@@ -72,17 +72,17 @@ type CollectionExport struct {
 	Name string `json:"name,omitempty"`
 }
 
-type TVNetworksExport struct {
+type TVNetworkExport struct {
 	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
-type KeywordsExport struct {
+type KeywordExport struct {
 	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
-type CompaniesExport struct {
+type CompanyExport struct {
 	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
@@ -117,13 +117,13 @@ func NewMovieDB(apiKey string, exportDate string) *TheMovieDB {
 	tmdb.APIKey = apiKey
 	tmdb.ExportDate = utc
 	tmdb.DailyExports = map[string]*DailyExport{
-		"Movies":      {"Movies", "movie_ids", "movie_ids.json", "", ""},
-		"TV Series":   {"TV Series", "tv_series_ids", "tv_series_ids.json", "", ""},
-		"People":      {"People", "person_ids", "person_ids.json", "", ""},
-		"Collections": {"Collections", "collection_ids", "collection_ids.json", "", ""},
-		"TV Networks": {"TV Networks", "tv_network_ids", "tv_network_ids.json", "", ""},
-		"Keywords":    {"Keywords", "keyword_ids", "keyword_ids.json", "", ""},
-		"Companies":   {"Companies", "production_company_ids", "company_ids.json", "", ""},
+		"Movie":      {"Movie", "movie_ids", "movie_ids.json", "", ""},
+		"TV Series":  {"TV Series", "tv_series_ids", "tv_series_ids.json", "", ""},
+		"Person":     {"Person", "person_ids", "person_ids.json", "", ""},
+		"Collection": {"Collection", "collection_ids", "collection_ids.json", "", ""},
+		"TV Network": {"TV Network", "tv_network_ids", "tv_network_ids.json", "", ""},
+		"Keyword":    {"Keyword", "keyword_ids", "keyword_ids.json", "", ""},
+		"Company":    {"Company", "production_company_ids", "company_ids.json", "", ""},
 	}
 
 	return tmdb
@@ -261,12 +261,12 @@ func CloseWorkerPool(w *bufio.Writer, chunkCount int64, rowCount int64, jobs cha
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "Movies" file and Export the Movie Data
+// Iterate through the Daily Export ID file and Export the Movie Data
 func (tmdb *TheMovieDB) ExportMovieData() error {
 
 	logger.Info().Msg("Initiating Export of Movie Data")
 
-	dailyExport := tmdb.DailyExports["Movies"]
+	dailyExport := tmdb.DailyExports["Movie"]
 
 	//------------------------------------------------------------------
 	// Open the Output File
@@ -280,10 +280,10 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	w := bufio.NewWriter(wf)
 	defer w.Flush()
 
-	// Open the Movies Daily Export IDs File and scan the lines
+	// Open the Movie Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Movies Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -344,14 +344,14 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of Movies Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of Movie Records Exported", rowCount).Msg(indent)
 
 	return nil
 }
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "TV Series" file and Export the TV Series Data
+// Iterate through the Daily Export ID file and Export the TV Series Data
 func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 
 	logger.Info().Msg("Initiating Export of TV Series Data")
@@ -373,7 +373,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 	// Open the TV Series Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the TV Series Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -434,19 +434,19 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of TV Series Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of TV Series Records Exported", rowCount).Msg(indent)
 
 	return nil
 }
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "People" file and Export the People Data
-func (tmdb *TheMovieDB) ExportPeopleData() error {
+// Iterate through the Daily Export ID file and Export the Person Data
+func (tmdb *TheMovieDB) ExportPersonData() error {
 
-	logger.Info().Msg("Initiating Export of People Data")
+	logger.Info().Msg("Initiating Export of Person Data")
 
-	dailyExport := tmdb.DailyExports["People"]
+	dailyExport := tmdb.DailyExports["Person"]
 
 	//------------------------------------------------------------------
 	// Open the Output File
@@ -460,10 +460,10 @@ func (tmdb *TheMovieDB) ExportPeopleData() error {
 	w := bufio.NewWriter(wf)
 	defer w.Flush()
 
-	// Open the People Daily Export IDs File and scan the lines
+	// Open the Person Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the People Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -476,7 +476,7 @@ func (tmdb *TheMovieDB) ExportPeopleData() error {
 	var results chan *string
 
 	//------------------------------------------------------------------
-	// Iterate through All of the People Export IDs
+	// Iterate through All of the Person Export IDs
 	var rowCount int64 = 0
 	var chunkCount int64 = 0
 	for r.Scan() {
@@ -495,13 +495,13 @@ func (tmdb *TheMovieDB) ExportPeopleData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var peopleExport *PeopleExport = new(PeopleExport)
-		if err := json.Unmarshal(line, &peopleExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the People Export JSON Data: %w", err)
+		var personExport *PersonExport = new(PersonExport)
+		if err := json.Unmarshal(line, &personExport); err != nil {
+			return fmt.Errorf("Failed to Unmarshal the Person Export JSON Data: %w", err)
 		}
 
 		// Add to the Worker Pool
-		jobs <- peopleExport.Id
+		jobs <- personExport.Id
 
 		chunkCount++
 		rowCount++
@@ -524,19 +524,19 @@ func (tmdb *TheMovieDB) ExportPeopleData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of People Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of Person Records Exported", rowCount).Msg(indent)
 
 	return nil
 }
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "Collection" file and Export the People Data
+// Iterate through the Daily Export ID file and Export the Collection Data
 func (tmdb *TheMovieDB) ExportCollectionData() error {
 
 	logger.Info().Msg("Initiating Export of Collection Data")
 
-	dailyExport := tmdb.DailyExports["Collections"]
+	dailyExport := tmdb.DailyExports["Collection"]
 
 	//------------------------------------------------------------------
 	// Open the Output File
@@ -553,7 +553,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 	// Open the Collection Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Collection Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -614,19 +614,19 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of Collection Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of Collection Records Exported", rowCount).Msg(indent)
 
 	return nil
 }
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "TV Networks" file and Export the People Data
-func (tmdb *TheMovieDB) ExportTVNetworksData() error {
+// Iterate through the Daily Export ID file and Export the TV Network Data
+func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 
-	logger.Info().Msg("Initiating Export of TV Networks Data")
+	logger.Info().Msg("Initiating Export of TV Network Data")
 
-	dailyExport := tmdb.DailyExports["TV Networks"]
+	dailyExport := tmdb.DailyExports["TV Network"]
 
 	//------------------------------------------------------------------
 	// Open the Output File
@@ -640,10 +640,10 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 	w := bufio.NewWriter(wf)
 	defer w.Flush()
 
-	// Open the TV Networks Daily Export IDs File and scan the lines
+	// Open the TV Network Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the TV Networks Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -656,7 +656,7 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 	var results chan *string
 
 	//------------------------------------------------------------------
-	// Iterate through All of the TV Networks Export IDs
+	// Iterate through All of the TV Network Export IDs
 	var rowCount int64 = 0
 	var chunkCount int64 = 0
 	for r.Scan() {
@@ -675,13 +675,13 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var tvNetworksExport *TVNetworksExport = new(TVNetworksExport)
-		if err := json.Unmarshal(line, &tvNetworksExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the TV Networks Export JSON Data: %w", err)
+		var tvNetworkExport *TVNetworkExport = new(TVNetworkExport)
+		if err := json.Unmarshal(line, &tvNetworkExport); err != nil {
+			return fmt.Errorf("Failed to Unmarshal the TV Network Export JSON Data: %w", err)
 		}
 
 		// Add to the Worker Pool
-		jobs <- tvNetworksExport.Id
+		jobs <- tvNetworkExport.Id
 
 		chunkCount++
 		rowCount++
@@ -704,19 +704,19 @@ func (tmdb *TheMovieDB) ExportTVNetworksData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of TV Networks Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of TV Network Records Exported", rowCount).Msg(indent)
 
 	return nil
 }
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "Keywords" file and Export the People Data
-func (tmdb *TheMovieDB) ExportKeywordsData() error {
+// Iterate through the Daily Export ID file and Export the Keyword Data
+func (tmdb *TheMovieDB) ExportKeywordData() error {
 
-	logger.Info().Msg("Initiating Export of Keywords Data")
+	logger.Info().Msg("Initiating Export of Keyword Data")
 
-	dailyExport := tmdb.DailyExports["Keywords"]
+	dailyExport := tmdb.DailyExports["Keyword"]
 
 	//------------------------------------------------------------------
 	// Open the Output File
@@ -730,10 +730,10 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 	w := bufio.NewWriter(wf)
 	defer w.Flush()
 
-	// Open the Keywords Daily Export IDs File and scan the lines
+	// Open the Keyword Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Keywords Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -746,7 +746,7 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 	var results chan *string
 
 	//------------------------------------------------------------------
-	// Iterate through All of the Keywords Export IDs
+	// Iterate through All of the Keyword Export IDs
 	var rowCount int64 = 0
 	var chunkCount int64 = 0
 	for r.Scan() {
@@ -765,13 +765,13 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var keywordsExport *KeywordsExport = new(KeywordsExport)
-		if err := json.Unmarshal(line, &keywordsExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Keywords Export JSON Data: %w", err)
+		var keywordExport *KeywordExport = new(KeywordExport)
+		if err := json.Unmarshal(line, &keywordExport); err != nil {
+			return fmt.Errorf("Failed to Unmarshal the Keyword Export JSON Data: %w", err)
 		}
 
 		// Add to the Worker Pool
-		jobs <- keywordsExport.Id
+		jobs <- keywordExport.Id
 
 		chunkCount++
 		rowCount++
@@ -794,19 +794,19 @@ func (tmdb *TheMovieDB) ExportKeywordsData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of Keywords Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of Keyword Records Exported", rowCount).Msg(indent)
 
 	return nil
 }
 
 //---------------------------------------------------------------------------------------
 
-// Iterate through the Daily Exports "Companies" file and Export the People Data
-func (tmdb *TheMovieDB) ExportCompaniesData() error {
+// Iterate through the Daily Export ID file and Export the Company Data
+func (tmdb *TheMovieDB) ExportCompanyData() error {
 
-	logger.Info().Msg("Initiating Export of Companies Data")
+	logger.Info().Msg("Initiating Export of Company Data")
 
-	dailyExport := tmdb.DailyExports["Companies"]
+	dailyExport := tmdb.DailyExports["Company"]
 
 	//------------------------------------------------------------------
 	// Open the Output File
@@ -820,10 +820,10 @@ func (tmdb *TheMovieDB) ExportCompaniesData() error {
 	w := bufio.NewWriter(wf)
 	defer w.Flush()
 
-	// Open the Companies Daily Export IDs File and scan the lines
+	// Open the Company Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Companies Daily Export IDs File: %w", err)
+		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
 	defer rf.Close()
 
@@ -836,7 +836,7 @@ func (tmdb *TheMovieDB) ExportCompaniesData() error {
 	var results chan *string
 
 	//------------------------------------------------------------------
-	// Iterate through All of the Companies Export IDs
+	// Iterate through All of the Company Export IDs
 	var rowCount int64 = 0
 	var chunkCount int64 = 0
 	for r.Scan() {
@@ -855,13 +855,13 @@ func (tmdb *TheMovieDB) ExportCompaniesData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var companiesExport *CompaniesExport = new(CompaniesExport)
-		if err := json.Unmarshal(line, &companiesExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Companies Export JSON Data: %w", err)
+		var companyExport *CompanyExport = new(CompanyExport)
+		if err := json.Unmarshal(line, &companyExport); err != nil {
+			return fmt.Errorf("Failed to Unmarshal the Company Export JSON Data: %w", err)
 		}
 
 		// Add to the Worker Pool
-		jobs <- companiesExport.Id
+		jobs <- companyExport.Id
 
 		chunkCount++
 		rowCount++
@@ -884,7 +884,7 @@ func (tmdb *TheMovieDB) ExportCompaniesData() error {
 		}
 	}
 
-	logger.Info().Int64("Number of Companies Exported", rowCount).Msg(indent)
+	logger.Info().Int64("Number of Company Records Exported", rowCount).Msg(indent)
 
 	return nil
 }

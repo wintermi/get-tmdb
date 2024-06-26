@@ -56,13 +56,13 @@ func main() {
 	var tmdbAPIKey = flag.String("a", "", "The Movie DB API Key  (Required)")
 	var exportDate = flag.String("exportDate", "", "Export Date Override")
 	var justIDs = flag.Bool("justIDs", false, "Only Get Daily Export IDs")
-	var skipMovies = flag.Bool("skipMovies", false, "Skip Movie Exports")
-	var skipTVSeries = flag.Bool("skipTVSeries", false, "Skip TV Series Exports")
-	var skipPeople = flag.Bool("skipPeople", false, "Skip People Exports")
-	var skipCollections = flag.Bool("skipCollections", false, "Skip Collections Exports")
-	var skipTVNetworks = flag.Bool("skipTVNetworks", false, "Skip TV Networks Exports")
-	var skipKeywords = flag.Bool("skipKeywords", false, "Skip Keywords Exports")
-	var skipCompanies = flag.Bool("skipCompanies", false, "Skip Companies Exports")
+	var skipMovie = flag.Bool("skipMovie", false, "Skip Movie Data Exports")
+	var skipTVSeries = flag.Bool("skipTVSeries", false, "Skip TV Series Data Exports")
+	var skipPerson = flag.Bool("skipPerson", false, "Skip Person Data Exports")
+	var skipCollection = flag.Bool("skipCollection", false, "Skip Collection Data Exports")
+	var skipTVNetwork = flag.Bool("skipTVNetwork", false, "Skip TV Network Data Exports")
+	var skipKeyword = flag.Bool("skipKeyword", false, "Skip Keyword Data Exports")
+	var skipCompany = flag.Bool("skipCompany", false, "Skip Company Data Exports")
 	var verbose = flag.Bool("v", false, "Output Verbose Detail")
 
 	// Parse the flags
@@ -93,13 +93,13 @@ func main() {
 	logger.Info().Str("The Movie DB API Key", *tmdbAPIKey).Msg(indent)
 	logger.Info().Str("Export Date Override", *exportDate).Msg(indent)
 	logger.Info().Bool("Only Get Daily Export IDs", *justIDs).Msg(indent)
-	logger.Info().Bool("Skip Movie Exports", *skipMovies).Msg(indent)
+	logger.Info().Bool("Skip Movie Exports", *skipMovie).Msg(indent)
 	logger.Info().Bool("Skip TV Series Exports", *skipTVSeries).Msg(indent)
-	logger.Info().Bool("Skip People Exports", *skipPeople).Msg(indent)
-	logger.Info().Bool("Skip Collections Exports", *skipCollections).Msg(indent)
-	logger.Info().Bool("Skip TV Networks Exports", *skipTVNetworks).Msg(indent)
-	logger.Info().Bool("Skip Keywords Exports", *skipKeywords).Msg(indent)
-	logger.Info().Bool("Skip Companies Exports", *skipCompanies).Msg(indent)
+	logger.Info().Bool("Skip Person Exports", *skipPerson).Msg(indent)
+	logger.Info().Bool("Skip Collection Exports", *skipCollection).Msg(indent)
+	logger.Info().Bool("Skip TV Network Exports", *skipTVNetwork).Msg(indent)
+	logger.Info().Bool("Skip Keyword Exports", *skipKeyword).Msg(indent)
+	logger.Info().Bool("Skip Company Exports", *skipCompany).Msg(indent)
 	logger.Info().Msg("Begin")
 
 	var tmdb *TheMovieDB = NewMovieDB(*tmdbAPIKey, *exportDate)
@@ -115,7 +115,7 @@ func main() {
 
 	// If we are only getting the IDs, then we can finish up here
 	if !*justIDs {
-		if !*skipMovies {
+		if !*skipMovie {
 			if err := tmdb.ExportMovieData(); err != nil {
 				logger.Error().Err(err).Msg("Export Movie Data Failed")
 				os.Exit(1)
@@ -129,37 +129,37 @@ func main() {
 			}
 		}
 
-		if !*skipPeople {
-			if err := tmdb.ExportPeopleData(); err != nil {
-				logger.Error().Err(err).Msg("Export People Data Failed")
+		if !*skipPerson {
+			if err := tmdb.ExportPersonData(); err != nil {
+				logger.Error().Err(err).Msg("Export Person Data Failed")
 				os.Exit(1)
 			}
 		}
 
-		if !*skipCollections {
+		if !*skipCollection {
 			if err := tmdb.ExportCollectionData(); err != nil {
 				logger.Error().Err(err).Msg("Export Collection Data Failed")
 				os.Exit(1)
 			}
 		}
 
-		if !*skipTVNetworks {
-			if err := tmdb.ExportTVNetworksData(); err != nil {
-				logger.Error().Err(err).Msg("Export TV Networks Data Failed")
+		if !*skipTVNetwork {
+			if err := tmdb.ExportTVNetworkData(); err != nil {
+				logger.Error().Err(err).Msg("Export TV Network Data Failed")
 				os.Exit(1)
 			}
 		}
 
-		if !*skipKeywords {
-			if err := tmdb.ExportKeywordsData(); err != nil {
-				logger.Error().Err(err).Msg("Export Keywords Data Failed")
+		if !*skipKeyword {
+			if err := tmdb.ExportKeywordData(); err != nil {
+				logger.Error().Err(err).Msg("Export Keyword Data Failed")
 				os.Exit(1)
 			}
 		}
 
-		if !*skipCompanies {
-			if err := tmdb.ExportCompaniesData(); err != nil {
-				logger.Error().Err(err).Msg("Export Companies Data Failed")
+		if !*skipCompany {
+			if err := tmdb.ExportCompanyData(); err != nil {
+				logger.Error().Err(err).Msg("Export Company Data Failed")
 				os.Exit(1)
 			}
 		}

@@ -22,20 +22,20 @@ ARGS:
         Only Get Daily Export IDs
   -o string
         Output Path  (Required)
-  -skipCollections
-        Skip Collections Exports
-  -skipCompanies
-        Skip Companies Exports
-  -skipKeywords
-        Skip Keywords Exports
-  -skipMovies
-        Skip Movie Exports
-  -skipPeople
-        Skip People Exports
-  -skipTVNetworks
-        Skip TV Networks Exports
+  -skipCollection
+        Skip Collection Data Exports
+  -skipCompany
+        Skip Company Data Exports
+  -skipKeyword
+        Skip Keyword Data Exports
+  -skipMovie
+        Skip Movie Data Exports
+  -skipPerson
+        Skip Person Data Exports
+  -skipTVNetwork
+        Skip TV Network Data Exports
   -skipTVSeries
-        Skip TV Series Exports
+        Skip TV Series Data Exports
   -v    Output Verbose Detail
 ```
 
