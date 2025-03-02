@@ -1,6 +1,6 @@
 # Get The Movie DB
 
-[![Workflows](https://github.com/wintermi/get-tmdb/workflows/Go/badge.svg)](https://github.com/wintermi/get-tmdb/actions/workflows/go.yml)
+[![Workflows](https://github.com/wintermi/get-tmdb/workflows/Go%20-%20Build/badge.svg)](https://github.com/wintermi/get-tmdb/actions)
 [![Go Report](https://goreportcard.com/badge/github.com/wintermi/get-tmdb)](https://goreportcard.com/report/github.com/wintermi/get-tmdb)
 [![License](https://img.shields.io/github/license/wintermi/get-tmdb)](https://github.com/wintermi/get-tmdb/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/wintermi/get-tmdb?include_prereleases)](https://github.com/wintermi/get-tmdb/releases)
