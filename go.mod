@@ -1,6 +1,6 @@
 module github.com/wintermi/get-tmdb
 
-go 1.24.0
+go 1.23.8
 
 require (
 	github.com/carlmjohnson/requests v0.24.3
@@ -11,6 +11,6 @@ require (
 require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 )
