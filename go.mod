@@ -1,6 +1,6 @@
 module github.com/wintermi/get-tmdb
 
-go 1.23.8
+go 1.24.4
 
 require (
 	github.com/carlmjohnson/requests v0.24.3
