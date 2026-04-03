@@ -144,13 +144,13 @@ func (tmdb *TheMovieDB) ValidateOutputPath(outputPath string) error {
 	// Calculate the Absolute Output Path
 	path, err := filepath.Abs(filepath.Join(outputPath, fmt.Sprintf("export_date=%s", tmdb.ExportDate.Format("2006-01-02"))))
 	if err != nil {
-		return fmt.Errorf("Failed To Get Absolute Output Path: %w", err)
+		return fmt.Errorf("failed to get absolute output path: %w", err)
 	}
 
 	// Make Sure the Output File Path Exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err = os.MkdirAll(path, 0700); err != nil {
-			return fmt.Errorf("Failed to Create the Output File Path: %w", err)
+			return fmt.Errorf("failed to create the output file path: %w", err)
 		}
 	}
 	tmdb.OutputPath = path
@@ -190,12 +190,12 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 
 		data, err := io.ReadAll(gz)
 		if err != nil {
-			return fmt.Errorf("Reading Response Body Failed: %w", err)
+			return fmt.Errorf("reading response body failed: %w", err)
 		}
 
 		dailyExport.ExportFile, _ = filepath.Abs(filepath.Join(tmdb.OutputPath, dailyExport.Name))
 		dailyExport.DataFile, _ = filepath.Abs(filepath.Join(tmdb.OutputPath,
-			fmt.Sprintf("%s.json", strings.Replace(strings.ToLower(dailyExport.MediaType), " ", "_", -1))))
+			fmt.Sprintf("%s.json", strings.ReplaceAll(strings.ToLower(dailyExport.MediaType), " ", "_"))))
 		err = os.WriteFile(dailyExport.ExportFile, data, 0600)
 		if err != nil {
 			return fmt.Errorf("Writing Response to File Failed: %w", err)
@@ -248,7 +248,7 @@ func CloseWorkerPool(w *bufio.Writer, chunkCount int64, rowCount int64, jobs cha
 
 	for num := int64(0); num < chunkCount; num++ {
 		response := <-results
-		if _, err := w.WriteString(fmt.Sprintf("%s\n", *response)); err != nil {
+		if _, err := fmt.Fprintf(w, "%s\n", *response); err != nil {
 			return fmt.Errorf("Failed Writing to the Output File")
 		}
 	}
@@ -274,18 +274,18 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Output File: %w", err)
 	}
-	defer wf.Close()
+	defer func() { _ = wf.Close() }()
 
 	// Ready a Buffered Writer
 	w := bufio.NewWriter(wf)
-	defer w.Flush()
+	defer func() { _ = w.Flush() }()
 
 	// Open the Movie Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
@@ -315,7 +315,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var movieExport *MovieExport = new(MovieExport)
+		movieExport := new(MovieExport)
 		if err := json.Unmarshal(line, &movieExport); err != nil {
 			return fmt.Errorf("Failed to Unmarshal the Movie Export JSON Data: %w", err)
 		}
@@ -364,18 +364,18 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Output File: %w", err)
 	}
-	defer wf.Close()
+	defer func() { _ = wf.Close() }()
 
 	// Ready a Buffered Writer
 	w := bufio.NewWriter(wf)
-	defer w.Flush()
+	defer func() { _ = w.Flush() }()
 
 	// Open the TV Series Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
@@ -405,7 +405,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var tvSeriesExport *TVSeriesExport = new(TVSeriesExport)
+		tvSeriesExport := new(TVSeriesExport)
 		if err := json.Unmarshal(line, &tvSeriesExport); err != nil {
 			return fmt.Errorf("Failed to Unmarshal the TV Series Export JSON Data: %w", err)
 		}
@@ -454,18 +454,18 @@ func (tmdb *TheMovieDB) ExportPersonData() error {
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Output File: %w", err)
 	}
-	defer wf.Close()
+	defer func() { _ = wf.Close() }()
 
 	// Ready a Buffered Writer
 	w := bufio.NewWriter(wf)
-	defer w.Flush()
+	defer func() { _ = w.Flush() }()
 
 	// Open the Person Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
@@ -495,7 +495,7 @@ func (tmdb *TheMovieDB) ExportPersonData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var personExport *PersonExport = new(PersonExport)
+		personExport := new(PersonExport)
 		if err := json.Unmarshal(line, &personExport); err != nil {
 			return fmt.Errorf("Failed to Unmarshal the Person Export JSON Data: %w", err)
 		}
@@ -544,18 +544,18 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Output File: %w", err)
 	}
-	defer wf.Close()
+	defer func() { _ = wf.Close() }()
 
 	// Ready a Buffered Writer
 	w := bufio.NewWriter(wf)
-	defer w.Flush()
+	defer func() { _ = w.Flush() }()
 
 	// Open the Collection Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
@@ -585,7 +585,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var collectionExport *CollectionExport = new(CollectionExport)
+		collectionExport := new(CollectionExport)
 		if err := json.Unmarshal(line, &collectionExport); err != nil {
 			return fmt.Errorf("Failed to Unmarshal the Collection Export JSON Data: %w", err)
 		}
@@ -634,18 +634,18 @@ func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Output File: %w", err)
 	}
-	defer wf.Close()
+	defer func() { _ = wf.Close() }()
 
 	// Ready a Buffered Writer
 	w := bufio.NewWriter(wf)
-	defer w.Flush()
+	defer func() { _ = w.Flush() }()
 
 	// Open the TV Network Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
@@ -675,7 +675,7 @@ func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var tvNetworkExport *TVNetworkExport = new(TVNetworkExport)
+		tvNetworkExport := new(TVNetworkExport)
 		if err := json.Unmarshal(line, &tvNetworkExport); err != nil {
 			return fmt.Errorf("Failed to Unmarshal the TV Network Export JSON Data: %w", err)
 		}
@@ -724,18 +724,18 @@ func (tmdb *TheMovieDB) ExportKeywordData() error {
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Output File: %w", err)
 	}
-	defer wf.Close()
+	defer func() { _ = wf.Close() }()
 
 	// Ready a Buffered Writer
 	w := bufio.NewWriter(wf)
-	defer w.Flush()
+	defer func() { _ = w.Flush() }()
 
 	// Open the Keyword Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
@@ -765,7 +765,7 @@ func (tmdb *TheMovieDB) ExportKeywordData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var keywordExport *KeywordExport = new(KeywordExport)
+		keywordExport := new(KeywordExport)
 		if err := json.Unmarshal(line, &keywordExport); err != nil {
 			return fmt.Errorf("Failed to Unmarshal the Keyword Export JSON Data: %w", err)
 		}
@@ -814,18 +814,18 @@ func (tmdb *TheMovieDB) ExportCompanyData() error {
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Output File: %w", err)
 	}
-	defer wf.Close()
+	defer func() { _ = wf.Close() }()
 
 	// Ready a Buffered Writer
 	w := bufio.NewWriter(wf)
-	defer w.Flush()
+	defer func() { _ = w.Flush() }()
 
 	// Open the Company Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
 		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	r := bufio.NewScanner(rf)
 	r.Split(bufio.ScanLines)
@@ -855,7 +855,7 @@ func (tmdb *TheMovieDB) ExportCompanyData() error {
 		line := []byte(r.Text())
 
 		// Unmarshal the JSON data contained in the line
-		var companyExport *CompanyExport = new(CompanyExport)
+		companyExport := new(CompanyExport)
 		if err := json.Unmarshal(line, &companyExport); err != nil {
 			return fmt.Errorf("Failed to Unmarshal the Company Export JSON Data: %w", err)
 		}

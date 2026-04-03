@@ -102,7 +102,7 @@ func main() {
 	logger.Info().Bool("Skip Company Exports", *skipCompany).Msg(indent)
 	logger.Info().Msg("Begin")
 
-	var tmdb *TheMovieDB = NewMovieDB(*tmdbAPIKey, *exportDate)
+	tmdb := NewMovieDB(*tmdbAPIKey, *exportDate)
 	if err := tmdb.ValidateOutputPath(*outputPath); err != nil {
 		logger.Error().Err(err).Msg("Output Path Validation Failed")
 		os.Exit(1)
