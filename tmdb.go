@@ -179,13 +179,13 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 			ToBytesBuffer(&response).
 			Fetch(context.Background())
 		if err != nil {
-			return fmt.Errorf("TMDB Movie API Request Failed: %w", err)
+			return fmt.Errorf("tmdb movie API request failed: %w", err)
 		}
 
 		// Decompress the response data
 		gz, err := gzip.NewReader(&response)
 		if err != nil {
-			return fmt.Errorf("GZIP Decompress Failed: %w", err)
+			return fmt.Errorf("gzip decompress failed: %w", err)
 		}
 
 		data, err := io.ReadAll(gz)
@@ -198,7 +198,7 @@ func (tmdb *TheMovieDB) GetDailyExports() error {
 			fmt.Sprintf("%s.json", strings.ReplaceAll(strings.ToLower(dailyExport.MediaType), " ", "_"))))
 		err = os.WriteFile(dailyExport.ExportFile, data, 0600)
 		if err != nil {
-			return fmt.Errorf("Writing Response to File Failed: %w", err)
+			return fmt.Errorf("writing response to file failed: %w", err)
 		}
 	}
 
@@ -249,7 +249,7 @@ func CloseWorkerPool(w *bufio.Writer, chunkCount int64, rowCount int64, jobs cha
 	for num := int64(0); num < chunkCount; num++ {
 		response := <-results
 		if _, err := fmt.Fprintf(w, "%s\n", *response); err != nil {
-			return fmt.Errorf("Failed Writing to the Output File")
+			return fmt.Errorf("failed writing to the output file")
 		}
 	}
 
@@ -272,7 +272,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	// Open the Output File
 	wf, err := os.Create(dailyExport.DataFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Output File: %w", err)
+		return fmt.Errorf("failed to open the output file: %w", err)
 	}
 	defer func() { _ = wf.Close() }()
 
@@ -283,7 +283,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	// Open the Movie Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
+		return fmt.Errorf("failed to open the daily export IDs file: %w", err)
 	}
 	defer func() { _ = rf.Close() }()
 
@@ -317,7 +317,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 		// Unmarshal the JSON data contained in the line
 		movieExport := new(MovieExport)
 		if err := json.Unmarshal(line, &movieExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Movie Export JSON Data: %w", err)
+			return fmt.Errorf("failed to unmarshal the movie export JSON data: %w", err)
 		}
 
 		// Add to the Worker Pool
@@ -330,7 +330,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
 			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+				return fmt.Errorf("close worker pool failed: %w", err)
 			}
 			chunkCount = 0
 		}
@@ -340,7 +340,7 @@ func (tmdb *TheMovieDB) ExportMovieData() error {
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
 		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			return fmt.Errorf("close worker pool failed: %w", err)
 		}
 	}
 
@@ -362,7 +362,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 	// Open the Output File
 	wf, err := os.Create(dailyExport.DataFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Output File: %w", err)
+		return fmt.Errorf("failed to open the output file: %w", err)
 	}
 	defer func() { _ = wf.Close() }()
 
@@ -373,7 +373,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 	// Open the TV Series Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
+		return fmt.Errorf("failed to open the daily export IDs file: %w", err)
 	}
 	defer func() { _ = rf.Close() }()
 
@@ -407,7 +407,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 		// Unmarshal the JSON data contained in the line
 		tvSeriesExport := new(TVSeriesExport)
 		if err := json.Unmarshal(line, &tvSeriesExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the TV Series Export JSON Data: %w", err)
+			return fmt.Errorf("failed to unmarshal the TV series export JSON data: %w", err)
 		}
 
 		// Add to the Worker Pool
@@ -420,7 +420,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
 			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+				return fmt.Errorf("close worker pool failed: %w", err)
 			}
 			chunkCount = 0
 		}
@@ -430,7 +430,7 @@ func (tmdb *TheMovieDB) ExportTVSeriesData() error {
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
 		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			return fmt.Errorf("close worker pool failed: %w", err)
 		}
 	}
 
@@ -452,7 +452,7 @@ func (tmdb *TheMovieDB) ExportPersonData() error {
 	// Open the Output File
 	wf, err := os.Create(dailyExport.DataFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Output File: %w", err)
+		return fmt.Errorf("failed to open the output file: %w", err)
 	}
 	defer func() { _ = wf.Close() }()
 
@@ -463,7 +463,7 @@ func (tmdb *TheMovieDB) ExportPersonData() error {
 	// Open the Person Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
+		return fmt.Errorf("failed to open the daily export IDs file: %w", err)
 	}
 	defer func() { _ = rf.Close() }()
 
@@ -497,7 +497,7 @@ func (tmdb *TheMovieDB) ExportPersonData() error {
 		// Unmarshal the JSON data contained in the line
 		personExport := new(PersonExport)
 		if err := json.Unmarshal(line, &personExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Person Export JSON Data: %w", err)
+			return fmt.Errorf("failed to unmarshal the person export JSON data: %w", err)
 		}
 
 		// Add to the Worker Pool
@@ -510,7 +510,7 @@ func (tmdb *TheMovieDB) ExportPersonData() error {
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
 			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+				return fmt.Errorf("close worker pool failed: %w", err)
 			}
 			chunkCount = 0
 		}
@@ -520,7 +520,7 @@ func (tmdb *TheMovieDB) ExportPersonData() error {
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
 		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			return fmt.Errorf("close worker pool failed: %w", err)
 		}
 	}
 
@@ -542,7 +542,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 	// Open the Output File
 	wf, err := os.Create(dailyExport.DataFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Output File: %w", err)
+		return fmt.Errorf("failed to open the output file: %w", err)
 	}
 	defer func() { _ = wf.Close() }()
 
@@ -553,7 +553,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 	// Open the Collection Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
+		return fmt.Errorf("failed to open the daily export IDs file: %w", err)
 	}
 	defer func() { _ = rf.Close() }()
 
@@ -587,7 +587,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 		// Unmarshal the JSON data contained in the line
 		collectionExport := new(CollectionExport)
 		if err := json.Unmarshal(line, &collectionExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Collection Export JSON Data: %w", err)
+			return fmt.Errorf("failed to unmarshal the collection export JSON data: %w", err)
 		}
 
 		// Add to the Worker Pool
@@ -600,7 +600,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
 			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+				return fmt.Errorf("close worker pool failed: %w", err)
 			}
 			chunkCount = 0
 		}
@@ -610,7 +610,7 @@ func (tmdb *TheMovieDB) ExportCollectionData() error {
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
 		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			return fmt.Errorf("close worker pool failed: %w", err)
 		}
 	}
 
@@ -632,7 +632,7 @@ func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 	// Open the Output File
 	wf, err := os.Create(dailyExport.DataFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Output File: %w", err)
+		return fmt.Errorf("failed to open the output file: %w", err)
 	}
 	defer func() { _ = wf.Close() }()
 
@@ -643,7 +643,7 @@ func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 	// Open the TV Network Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
+		return fmt.Errorf("failed to open the daily export IDs file: %w", err)
 	}
 	defer func() { _ = rf.Close() }()
 
@@ -677,7 +677,7 @@ func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 		// Unmarshal the JSON data contained in the line
 		tvNetworkExport := new(TVNetworkExport)
 		if err := json.Unmarshal(line, &tvNetworkExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the TV Network Export JSON Data: %w", err)
+			return fmt.Errorf("failed to unmarshal the TV network export JSON data: %w", err)
 		}
 
 		// Add to the Worker Pool
@@ -690,7 +690,7 @@ func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
 			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+				return fmt.Errorf("close worker pool failed: %w", err)
 			}
 			chunkCount = 0
 		}
@@ -700,7 +700,7 @@ func (tmdb *TheMovieDB) ExportTVNetworkData() error {
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
 		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			return fmt.Errorf("close worker pool failed: %w", err)
 		}
 	}
 
@@ -722,7 +722,7 @@ func (tmdb *TheMovieDB) ExportKeywordData() error {
 	// Open the Output File
 	wf, err := os.Create(dailyExport.DataFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Output File: %w", err)
+		return fmt.Errorf("failed to open the output file: %w", err)
 	}
 	defer func() { _ = wf.Close() }()
 
@@ -733,7 +733,7 @@ func (tmdb *TheMovieDB) ExportKeywordData() error {
 	// Open the Keyword Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
+		return fmt.Errorf("failed to open the daily export IDs file: %w", err)
 	}
 	defer func() { _ = rf.Close() }()
 
@@ -767,7 +767,7 @@ func (tmdb *TheMovieDB) ExportKeywordData() error {
 		// Unmarshal the JSON data contained in the line
 		keywordExport := new(KeywordExport)
 		if err := json.Unmarshal(line, &keywordExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Keyword Export JSON Data: %w", err)
+			return fmt.Errorf("failed to unmarshal the keyword export JSON data: %w", err)
 		}
 
 		// Add to the Worker Pool
@@ -780,7 +780,7 @@ func (tmdb *TheMovieDB) ExportKeywordData() error {
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
 			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+				return fmt.Errorf("close worker pool failed: %w", err)
 			}
 			chunkCount = 0
 		}
@@ -790,7 +790,7 @@ func (tmdb *TheMovieDB) ExportKeywordData() error {
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
 		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			return fmt.Errorf("close worker pool failed: %w", err)
 		}
 	}
 
@@ -812,7 +812,7 @@ func (tmdb *TheMovieDB) ExportCompanyData() error {
 	// Open the Output File
 	wf, err := os.Create(dailyExport.DataFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Output File: %w", err)
+		return fmt.Errorf("failed to open the output file: %w", err)
 	}
 	defer func() { _ = wf.Close() }()
 
@@ -823,7 +823,7 @@ func (tmdb *TheMovieDB) ExportCompanyData() error {
 	// Open the Company Daily Export IDs File and scan the lines
 	rf, err := os.Open(dailyExport.ExportFile)
 	if err != nil {
-		return fmt.Errorf("Failed to Open the Daily Export IDs File: %w", err)
+		return fmt.Errorf("failed to open the daily export IDs file: %w", err)
 	}
 	defer func() { _ = rf.Close() }()
 
@@ -857,7 +857,7 @@ func (tmdb *TheMovieDB) ExportCompanyData() error {
 		// Unmarshal the JSON data contained in the line
 		companyExport := new(CompanyExport)
 		if err := json.Unmarshal(line, &companyExport); err != nil {
-			return fmt.Errorf("Failed to Unmarshal the Company Export JSON Data: %w", err)
+			return fmt.Errorf("failed to unmarshal the company export JSON data: %w", err)
 		}
 
 		// Add to the Worker Pool
@@ -870,7 +870,7 @@ func (tmdb *TheMovieDB) ExportCompanyData() error {
 		// all of the jobs and write the response to the output file
 		if chunkCount == chunkSize {
 			if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-				return fmt.Errorf("Close Worker Pool Failed: %w", err)
+				return fmt.Errorf("close worker pool failed: %w", err)
 			}
 			chunkCount = 0
 		}
@@ -880,7 +880,7 @@ func (tmdb *TheMovieDB) ExportCompanyData() error {
 	// all of the jobs and write the response to the output file
 	if chunkCount > 0 {
 		if err := CloseWorkerPool(w, chunkCount, rowCount, jobs, results); err != nil {
-			return fmt.Errorf("Close Worker Pool Failed: %w", err)
+			return fmt.Errorf("close worker pool failed: %w", err)
 		}
 	}
 
